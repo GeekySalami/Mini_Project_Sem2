@@ -19,22 +19,21 @@ pygame.mixer.init()
 pygame.mixer.music.load(alarm_sound_path)
 
 def play_alarm_sound():
+    global play
     if pygame.mixer.music.get_busy() == 0:
         pygame.mixer.music.play(-1)
-    time.sleep(1)
-    
+        time.sleep(3)
+
 
 def euclidean_distance(image, top, bottom):
     height, width = image.shape[0:2]
             
     point1 = int(top.x * width), int(top.y * height)
     point2 = int(bottom.x * width), int(bottom.y * height)
-    
     distance = dis.euclidean(point1, point2)
     return distance
 
 
-face_mesh = mp.solutions.face_mesh
 
 
 RIGHT_EYE = [ 33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161 , 246 ]
@@ -47,25 +46,18 @@ LEFT_EYE_LEFT_RIGHT = [263, 362]
 RIGHT_EYE_TOP_BOTTOM = [159, 145]
 RIGHT_EYE_LEFT_RIGHT = [133, 33]
 
+face_mesh = mp.solutions.face_mesh
 
 face_model = face_mesh.FaceMesh(static_image_mode=False,
                                 max_num_faces= 1,
-                                min_detection_confidence=0.2,
-                                min_tracking_confidence=0.2)
+                                min_detection_confidence=0.6,
+                                min_tracking_confidence=0.6)
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 
 
-
-def enhance_image(frame):
-    alpha = 1.5
-    beta = 6
-   
-
-    enhanced_frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
-    return enhanced_frame
 
 def stop_alarm_sound():
     pygame.mixer.music.stop()
@@ -88,8 +80,8 @@ def Eye_aspect_ratio(image, outputs, top_bottom, left_right):
     
     return EAR
 
-thresh = 3.9
-frame_check = 30
+thresh = 4.3
+frame_check = 40
 
 # Flag to indicate if the detection should stop
 stop_detection_flag = False
@@ -97,7 +89,8 @@ stop_detection_flag = False
 
 # Function to perform the eye blink detection
 def perform_detection():
-    cap = cv2.VideoCapture(0)
+    global play
+    cap = cv2.VideoCapture(2)
     
     flag = 0
     while True:
@@ -106,7 +99,9 @@ def perform_detection():
 
         result, image = cap.read()
         image = cv2.flip(image,1)
-        image = cv2.resize(image,(640,480))
+        imcpy = image
+        image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+        #image = cv2.resize(image,(640,480))
         #image = enhance_image(image)
         #print(1)
         if result:
@@ -121,7 +116,7 @@ def perform_detection():
 
                 for face_landmarks in outputs.multi_face_landmarks:
                     mp_drawing.draw_landmarks(
-                image = image,
+                image = imcpy,
                 landmark_list = face_landmarks,
                 connections = face_mesh.FACEMESH_TESSELATION,
                 landmark_drawing_spec = None,
@@ -144,14 +139,15 @@ def perform_detection():
             
                 if ratio >= thresh:
                     flag +=1
-
-                    if flag > frame_check:
-                        play_alarm_sound()
-                        cv2.putText(image,"ALERT!!",(80,40),cv2.FONT_HERSHEY_SIMPLEX,2.0,(0,0,255),2)
-                
                 else:
                     flag = 0
-                    stop_alarm_sound()
+
+                if flag > frame_check:
+                	cv2.putText(imcpy,"ALERT!!",(80,40),cv2.FONT_HERSHEY_SIMPLEX,2.0,(0,0,255),2)
+                	play_alarm_sound()
+                
+                else:
+                    	stop_alarm_sound()
         else:
             print("Error")
             continue
@@ -161,8 +157,8 @@ def perform_detection():
         #print(5)
             
            
-        cv2.imshow("FACE MESH", image)
-        if (cv2.waitKey(1) & 0xFF == ord ('q')):
+        cv2.imshow("FACE MESH", imcpy)
+        if (cv2.waitKey(2) & 0xFF == ord ('q')):
             print(6)
             break
 
