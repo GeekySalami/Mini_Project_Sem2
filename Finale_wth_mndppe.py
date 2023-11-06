@@ -81,7 +81,7 @@ def Eye_aspect_ratio(image, outputs, top_bottom, left_right):
     return EAR
 
 thresh = 4.3
-frame_check = 40
+frame_check = 20
 
 # Flag to indicate if the detection should stop
 stop_detection_flag = False
@@ -101,8 +101,7 @@ def perform_detection():
         image = cv2.flip(image,1)
         imcpy = image
         image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-        #image = cv2.resize(image,(640,480))
-        #image = enhance_image(image)
+
         #print(1)
         if result:
             #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -187,4 +186,3 @@ def on_closing():
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
-
